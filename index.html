@@ -1,614 +1,343 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>국회 개념 퀴즈 게임</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🏛️ 국회 탐험대 — 국회의 위상과 역할 퀴즈</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
-    background: #f5f4fb;
-    min-height: 100vh;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 2rem 1rem;
-  }
-  #app {
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 32px rgba(83,74,183,0.10);
-    padding: 2rem 1.5rem;
-    width: 100%;
-    max-width: 600px;
-  }
-  .screen { display: none; }
-  .screen.active { display: block; }
-
-  /* badges */
-  .badge {
-    display: inline-block;
-    font-size: 12px;
-    padding: 3px 11px;
-    border-radius: 8px;
-    font-weight: 600;
-    margin-bottom: 2px;
-  }
-  .badge-purple { background: #EEEDFE; color: #3C3489; }
-  .badge-teal   { background: #E1F5EE; color: #085041; }
-  .badge-amber  { background: #FAEEDA; color: #633806; }
-
-  /* buttons */
-  .btn {
-    display: inline-block;
-    padding: 10px 24px;
-    border-radius: 10px;
-    border: 1.5px solid #ccc;
-    background: #fff;
-    color: #333;
-    font-size: 15px;
-    cursor: pointer;
-    transition: background 0.15s;
-    font-family: inherit;
-  }
-  .btn:hover { background: #f0effe; }
-  .btn-primary { background: #534AB7; color: #fff; border-color: #534AB7; }
-  .btn-primary:hover { background: #3C3489; }
-  .btn-sm { padding: 7px 16px; font-size: 14px; }
-  .btn-danger { background: #FCEBEB; color: #A32D2D; border-color: #F09595; }
-
-  /* progress */
-  .progress-bar {
-    height: 7px;
-    background: #EEEDFE;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-bottom: 1.5rem;
-  }
-  .progress-fill {
-    height: 100%;
-    background: #534AB7;
-    border-radius: 4px;
-    transition: width 0.3s;
-  }
-
-  /* question card */
-  .q-card {
-    background: #fafafa;
-    border: 1px solid #e8e6fa;
-    border-radius: 14px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  .opt-btn {
-    display: block;
-    width: 100%;
-    text-align: left;
-    padding: 12px 16px;
-    border-radius: 10px;
-    border: 1px solid #e0e0e0;
-    background: #fff;
-    color: #222;
-    font-size: 14px;
-    cursor: pointer;
-    margin-bottom: 8px;
-    transition: all 0.15s;
-    line-height: 1.6;
-    font-family: inherit;
-  }
-  .opt-btn:hover:not(:disabled) { background: #f0effe; border-color: #AFA9EC; }
-  .opt-btn.correct  { background: #EAF3DE; border-color: #639922; color: #27500A; font-weight: 600; }
-  .opt-btn.wrong    { background: #FCEBEB; border-color: #A32D2D; color: #501313; }
-  .opt-btn.reveal-correct { background: #EAF3DE; border-color: #639922; color: #27500A; }
-  .opt-btn:disabled { cursor: default; }
-
-  .meta {
-    font-size: 13px;
-    color: #888;
-    margin-bottom: 0.75rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .streak { font-size: 13px; font-weight: 700; color: #534AB7; }
-
-  /* result */
-  .score-ring {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
-    border: 7px solid #534AB7;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin: 1rem auto;
-  }
-  .score-num   { font-size: 36px; font-weight: 700; color: #534AB7; }
-  .score-total { font-size: 14px; color: #888; }
-
-  .result-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 13px;
-  }
-  .icon {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; flex-shrink: 0; margin-top: 1px;
-  }
-  .icon-ok { background: #EAF3DE; color: #3B6D11; }
-  .icon-x  { background: #FCEBEB; color: #A32D2D; }
-
-  .feedback-box {
-    margin-top: 10px;
-    padding: 11px 15px;
-    border-radius: 10px;
-    background: #f5f4fb;
-    font-size: 13px;
-    color: #555;
-    line-height: 1.7;
-    border-left: 3px solid #534AB7;
-  }
-
-  /* leaderboard */
-  .lb-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    margin-bottom: 6px;
-    font-size: 14px;
-  }
-  .lb-rank { font-size: 20px; min-width: 34px; text-align: center; }
-  .lb-name { flex: 1; font-weight: 600; color: #222; }
-  .lb-score { font-weight: 600; color: #534AB7; min-width: 50px; text-align: right; }
-  .lb-time  { font-size: 12px; color: #999; min-width: 65px; text-align: right; }
-  .lb-mine  { background: #EEEDFE; border: 1px solid #AFA9EC; }
-  .lb-other { background: #f7f7f7; }
-  .empty-lb { text-align: center; padding: 2rem; color: #aaa; font-size: 14px; line-height: 1.8; }
-
-  .tab-row { display: flex; gap: 6px; margin-bottom: 1.25rem; }
-  .tab {
-    padding: 6px 18px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    font-size: 13px;
-    cursor: pointer;
-    background: #fff;
-    color: #888;
-    font-family: inherit;
-  }
-  .tab.active { background: #534AB7; color: #fff; border-color: #534AB7; }
-
-  /* name input */
-  .name-input {
-    width: 100%;
-    padding: 11px 14px;
-    border-radius: 10px;
-    border: 1.5px solid #ccc;
-    font-size: 15px;
-    background: #fff;
-    color: #222;
-    outline: none;
-    margin-bottom: 1rem;
-    font-family: inherit;
-    transition: border-color 0.2s;
-  }
-  .name-input:focus { border-color: #534AB7; box-shadow: 0 0 0 3px rgba(83,74,183,0.12); }
-
-  /* google sheet URL input */
-  .url-input {
-    width: 100%;
-    padding: 9px 12px;
-    border-radius: 8px;
-    border: 1.5px solid #ccc;
-    font-size: 13px;
-    color: #333;
-    outline: none;
-    font-family: monospace;
-    margin-bottom: 8px;
-    transition: border-color 0.2s;
-  }
-  .url-input:focus { border-color: #534AB7; }
-
-  /* toast */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #534AB7;
-    color: #fff;
-    padding: 11px 24px;
-    border-radius: 12px;
-    font-size: 14px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-    z-index: 999;
-    white-space: nowrap;
-    font-family: inherit;
-  }
-
-  h2 { font-size: 20px; font-weight: 700; color: #222; margin-bottom: 0.5rem; }
-  h3 { font-size: 15px; font-weight: 600; color: #222; margin-bottom: 1rem; line-height: 1.7; }
-
-  .section-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #888;
-    margin-bottom: 8px;
-  }
-  .info-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
-    font-size: 13px;
-    color: #666;
-    background: #f7f6fe;
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-  }
-
-  /* settings panel */
-  .settings-box {
-    background: #f7f6fe;
-    border-radius: 12px;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1rem;
-  }
-  .settings-box summary {
-    font-size: 13px;
-    font-weight: 600;
-    color: #534AB7;
-    cursor: pointer;
-    margin-bottom: 4px;
-  }
-  .settings-box[open] summary { margin-bottom: 10px; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Pretendard','맑은 고딕','Malgun Gothic',-apple-system,sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:#111827;padding:20px}
+.wrap{max-width:760px;margin:0 auto}
+.card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 10px 40px rgba(0,0,0,.15)}
+h1{font-size:24px;font-weight:800;margin-bottom:6px;color:#1e3a8a}
+.sub{color:#6b7280;font-size:13px;margin-bottom:20px}
+.field{margin-bottom:14px}
+label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+input,select{width:100%;padding:11px 13px;border:1.5px solid #d1d5db;border-radius:8px;font-size:14px;font-family:inherit;outline:none}
+input:focus,select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.btn{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border:none;border-radius:10px;padding:13px 24px;font-weight:700;font-size:15px;cursor:pointer;width:100%;font-family:inherit;transition:transform .1s}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-sm{width:auto;padding:10px 18px;font-size:14px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.title{font-size:18px;font-weight:700;color:#1e3a8a}
+.user-info{font-size:12px;color:#6b7280}
+.badge{background:#eff6ff;color:#1d4ed8;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:600}
+.progress{height:9px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin:12px 0 18px}
+.progress > div{height:100%;background:linear-gradient(90deg,#3b82f6,#8b5cf6);transition:width .35s}
+.qtag{display:inline-block;background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;margin-bottom:10px;letter-spacing:.3px}
+.question{font-size:17px;font-weight:600;line-height:1.55;margin-bottom:16px}
+.choice{display:block;width:100%;text-align:left;background:#fff;border:1.5px solid #e5e7eb;border-radius:10px;padding:13px 15px;margin-bottom:9px;cursor:pointer;font-size:14px;font-family:inherit;color:#111827;transition:all .15s}
+.choice:hover:not(:disabled){border-color:#3b82f6;background:#eff6ff;transform:translateX(2px)}
+.choice.correct{border-color:#10b981;background:#d1fae5;color:#065f46;font-weight:700}
+.choice.wrong{border-color:#ef4444;background:#fee2e2;color:#991b1b}
+.choice:disabled{cursor:default}
+.feedback{margin-top:14px;padding:13px 15px;border-radius:8px;font-size:13.5px;line-height:1.6;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:#ecfdf5;border-left:4px solid #10b981;color:#065f46}
+.feedback.no{background:#fef2f2;border-left:4px solid #ef4444;color:#991b1b}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.score{font-size:14px;color:#374151;font-weight:600}
+.result{text-align:center;padding:10px 0}
+.result .emoji{font-size:64px;margin:6px 0}
+.result h2{font-size:24px;margin:8px 0;color:#1e3a8a}
+.result .big{font-size:54px;font-weight:800;background:linear-gradient(135deg,#2563eb,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:8px 0}
+.result p{color:#4b5563;font-size:14px;margin:5px 0}
+.send-status{margin-top:16px;padding:11px;border-radius:8px;font-size:13px}
+.send-status.ok{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+.send-status.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
+.send-status.pending{background:#fef9c3;color:#713f12;border:1px solid #fde68a}
+.timer{background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700}
+hr{border:none;border-top:1px solid #e5e7eb;margin:14px 0}
 </style>
 </head>
 <body>
-<div id="app">
-
-  <!-- ===== START ===== -->
-  <div id="start-screen" class="screen active">
-    <div style="text-align:center;padding:1.5rem 0 1rem">
-      <div style="font-size:52px;margin-bottom:0.75rem">🏛️</div>
-      <h2 style="font-size:24px;margin-bottom:0.4rem">국회 개념 퀴즈</h2>
-      <p style="font-size:14px;color:#888;margin-bottom:1.25rem;line-height:1.7">이름을 입력하고 시작해요.<br>결과는 리더보드 또는 구글 시트에 기록돼요!</p>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:1.5rem">
-        <span class="badge badge-purple">개념 용어</span>
-        <span class="badge badge-teal">국회 권한</span>
-        <span class="badge badge-amber">총 15문제</span>
-      </div>
-    </div>
-
-    <input class="name-input" id="name-input" placeholder="이름을 입력하세요 (예: 홍길동)" maxlength="10" />
-
-    <div style="background:#E1F5EE;border-radius:10px;padding:9px 14px;margin-bottom:1rem;font-size:13px;color:#085041">
-      📊 결과가 구글 시트에 자동으로 기록돼요!
-    </div>
-
-    <div style="text-align:center;margin-bottom:1.5rem;display:flex;flex-direction:column;gap:8px;align-items:center">
-      <button class="btn btn-primary" onclick="tryStart()" style="width:180px">게임 시작!</button>
-      <button class="btn btn-sm" onclick="goLeaderboard()">🏆 리더보드 보기</button>
-    </div>
-
-    <div class="info-grid">
-      <div>✦ 대의제 / 입법권</div>
-      <div>✦ 지역구·비례대표 의원</div>
-      <div>✦ 본회의 / 상임위원회</div>
-      <div>✦ 교섭단체</div>
-      <div>✦ 입법에 관한 권한</div>
-      <div>✦ 국가 재정 권한</div>
-      <div>✦ 국정감사·국정조사</div>
-      <div>✦ 탄핵소추권</div>
-    </div>
-  </div>
-
-  <!-- ===== QUIZ ===== -->
-  <div id="quiz-screen" class="screen">
-    <div class="meta">
-      <span id="q-counter"></span>
-      <span class="streak" id="streak-display"></span>
-    </div>
-    <div class="progress-bar"><div class="progress-fill" id="prog"></div></div>
-    <div class="q-card">
-      <div style="margin-bottom:10px"><span class="badge" id="q-category"></span></div>
-      <h3 id="q-text"></h3>
-    </div>
-    <div id="options"></div>
-    <div class="feedback-box" id="feedback" style="display:none"></div>
-    <div style="text-align:right;margin-top:1rem">
-      <button class="btn btn-primary btn-sm" id="next-btn" style="display:none" onclick="nextQ()">다음 문제 →</button>
-    </div>
-  </div>
-
-  <!-- ===== RESULT ===== -->
-  <div id="result-screen" class="screen">
-    <h2 style="text-align:center;margin-bottom:0.25rem">결과</h2>
-    <p style="text-align:center;font-size:13px;color:#888;margin-bottom:1rem" id="result-msg"></p>
-    <div class="score-ring">
-      <span class="score-num" id="final-score"></span>
-      <span class="score-total" id="final-total"></span>
-    </div>
-
-    <!-- 제출 영역 -->
-    <div id="submit-area" style="background:#f5f4fb;border-radius:12px;padding:1rem 1.25rem;margin:1rem 0;text-align:center">
-      <p style="font-size:14px;margin-bottom:10px;color:#333">점수를 기록할까요?</p>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-        <button class="btn btn-primary btn-sm" id="submit-lb-btn" onclick="submitBoth()">📤 점수 제출</button>
-        <button class="btn btn-sm" onclick="skipSubmit()">건너뛰기</button>
-      </div>
-      <p id="submit-status" style="font-size:12px;margin-top:8px;color:#534AB7;display:none"></p>
-    </div>
-
-    <div style="text-align:center;margin:0.5rem 0 1.25rem;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-      <button class="btn btn-primary btn-sm" onclick="restartGame()">다시 풀기</button>
-      <button class="btn btn-sm" onclick="toggleReview()">오답 확인</button>
-      <button class="btn btn-sm" onclick="goLeaderboard()">🏆 리더보드</button>
-    </div>
-
-    <div id="review-list" style="display:none">
-      <p class="section-label" style="margin-bottom:8px">문제 리뷰</p>
-      <div id="review-items"></div>
-    </div>
-  </div>
-
-  <!-- ===== LEADERBOARD ===== -->
-  <div id="leaderboard-screen" class="screen">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem">
-      <button class="btn btn-sm" onclick="goStart()">← 돌아가기</button>
-      <h2 style="margin:0">🏆 리더보드</h2>
-    </div>
-    <div class="tab-row">
-      <button class="tab active" id="tab-all" onclick="switchTab('all')">전체 순위</button>
-      <button class="tab" id="tab-top" onclick="switchTab('top')">상위 5명</button>
-    </div>
-    <div id="lb-content"></div>
-    <div style="text-align:center;margin-top:1.25rem">
-      <button class="btn btn-sm btn-danger" onclick="clearBoard()">리더보드 초기화</button>
-    </div>
-  </div>
-
+<div class="wrap">
+  <div class="card" id="app"></div>
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script>
-const ALL_QUESTIONS = [
-  {cat:"개념 용어",cat_class:"badge-purple",q:"국민이 선거를 통해 대표자를 선출하고, 그 대표자가 국민을 대신해 정치를 하는 제도를 무엇이라 하는가?",opts:["대의제","직접민주제","의원내각제","연방제"],ans:0,exp:"대의제(간접민주제)는 국민이 직접 정치에 참여하는 대신 대표자를 뽑아 국정을 맡기는 제도예요."},
-  {cat:"개념 용어",cat_class:"badge-purple",q:"법률을 만들거나 고치는 권한으로, 우리나라 헌법상 국회에 속하는 권한을 무엇이라 하는가?",opts:["사법권","입법권","행정권","조약체결권"],ans:1,exp:"입법권은 법률을 제·개정하는 권한이에요. 헌법 제40조는 입법권이 국회에 속한다고 명시합니다."},
-  {cat:"개념 용어",cat_class:"badge-purple",q:"삼권분립에서 법률을 만드는 국가기관을 무엇이라 부르는가?",opts:["행정부","사법부","입법부","헌법재판소"],ans:2,exp:"입법부는 국회를 가리켜요. 행정부(정부), 사법부(법원)와 함께 삼권분립을 이루죠."},
-  {cat:"개념 용어",cat_class:"badge-purple",q:"특정 지역을 대표하는 선거구에서 주민의 직접 투표로 선출되는 국회의원은?",opts:["비례대표 국회의원","임명직 국회의원","지역구 국회의원","후보추천 국회의원"],ans:2,exp:"지역구 국회의원은 전국을 나눈 선거구에서 가장 많은 표를 얻은 후보가 당선돼요."},
-  {cat:"개념 용어",cat_class:"badge-purple",q:"정당의 득표율에 따라 의석을 배분받는 방식으로 선출되는 국회의원은?",opts:["지역구 국회의원","비례대표 국회의원","원내대표 의원","무소속 의원"],ans:1,exp:"비례대표 국회의원은 유권자가 정당에 투표한 비율에 따라 각 정당에 의석이 배분되는 방식이에요."},
-  {cat:"개념 용어",cat_class:"badge-purple",q:"국회의원 전원이 참석하여 법안 의결, 예산안 심의 등 최종 의사결정을 하는 회의체는?",opts:["본회의","상임위원회","교섭단체 회의","국무회의"],ans:0,exp:"본회의는 국회의원 전원이 참가하는 회의예요. 법안은 보통 상임위원회 심의 후 본회의에서 최종 표결을 해요."},
-  {cat:"개념 용어",cat_class:"badge-purple",q:"국회에서 특정 분야(예: 법제사법·기획재정·교육 등)를 전문적으로 심의하는 상설 위원회를 무엇이라 하는가?",opts:["임시위원회","교섭단체","상임위원회","특별위원회"],ans:2,exp:"상임위원회는 국회의 상설 전문 위원회예요. 의안은 상임위원회 심사를 거쳐 본회의에 올려져요."},
-  {cat:"개념 용어",cat_class:"badge-purple",q:"국회에서 정책을 협의하고 의사일정 조정 등을 위해 일정 수 이상의 의원이 모여 구성하는 단체를 무엇이라 하는가?",opts:["교섭단체","임시회","본회의","원내대책회의"],ans:0,exp:"교섭단체는 보통 20인 이상의 국회의원으로 구성돼요. 국회 운영과 의사일정 협의에서 중요한 역할을 해요."},
-  {cat:"국회 권한",cat_class:"badge-teal",q:"다음 중 국회의 '입법에 관한 권한'에 해당하지 않는 것은?",opts:["법률 제정","헌법 개정 발의","조약 비준 동의","예산안 심의·의결"],ans:3,exp:"예산안 심의·의결은 국가 재정에 관한 권한이에요. 입법에 관한 권한에는 법률 제·개정, 헌법 개정 발의, 조약 비준 동의 등이 있어요."},
-  {cat:"국회 권한",cat_class:"badge-teal",q:"국회가 정부가 제출한 다음 연도 예산안을 심의하고 확정하는 권한은 어느 분류에 속하는가?",opts:["입법에 관한 권한","일반 국정에 관한 권한","사법에 관한 권한","국가 재정에 관한 권한"],ans:3,exp:"예산안 심의·의결은 국가 재정에 관한 권한에 속해요. 또한 결산 심사, 기채 동의 등도 포함돼요."},
-  {cat:"국회 권한",cat_class:"badge-teal",q:"국회가 행정부 각 기관의 사무를 정기적으로 조사·확인하는 제도로, 매년 정기국회에서 실시하는 것은?",opts:["국정감사","국정조사","탄핵소추","예산 심의"],ans:0,exp:"국정감사는 매년 정기국회 기간에 행정부 등의 국정 전반을 감사하는 제도예요."},
-  {cat:"국회 권한",cat_class:"badge-teal",q:"특정 사안이 발생했을 때 국회 재적의원 4분의 1 이상의 요구로 조사를 실시하는 제도는?",opts:["국정감사","국정조사","행정감찰","특검"],ans:1,exp:"국정조사는 특정 사안에 대해 필요할 때 수시로 실시하는 조사예요. 특정 사안을 대상으로 한다는 점에서 국정감사와 달라요."},
-  {cat:"국회 권한",cat_class:"badge-teal",q:"대통령, 국무총리 등 고위 공직자가 직무상 헌법·법률을 위반했을 때 국회가 소추를 의결하는 권한은?",opts:["불신임권","탄핵소추권","조약 비준권","국정감사권"],ans:1,exp:"탄핵소추권은 고위직 공무원의 헌법·법률 위반 시 국회가 소추를 의결하는 권한이에요. 헌법재판소가 최종 심판해요."},
-  {cat:"국회 권한",cat_class:"badge-teal",q:"국회가 국채 발행이나 국가의 예산 외 의무 부담에 동의하는 권한은 어느 분류에 속하는가?",opts:["입법에 관한 권한","국가 재정에 관한 권한","일반 국정에 관한 권한","사법에 관한 권한"],ans:1,exp:"기채 동의(국채 발행 동의) 등 재정과 관련된 권한은 국가 재정에 관한 권한에 속해요."},
-  {cat:"국회 권한",cat_class:"badge-teal",q:"국정감사와 국정조사의 차이를 바르게 설명한 것은?",opts:["국정감사는 수시, 국정조사는 정기적으로 실시된다","국정감사는 정기적·전반적, 국정조사는 특정 사안을 수시 조사한다","국정감사는 헌법재판소, 국정조사는 국회가 실시한다","두 제도는 실질적으로 동일한 제도이다"],ans:1,exp:"국정감사는 매년 정기국회에서 국정 전반을 감사하고, 국정조사는 특정 사안이 발생했을 때 수시로 실시하는 차이가 있어요."},
+/* ================================================================
+   ⚙️ 설정: Google Apps Script 웹앱 URL을 아래에 붙여넣으세요.
+   설정 안내는 함께 제공된 가이드 문서를 참고해주세요.
+   ================================================================ */
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw2R0ZhCI8ujuXCX7BZRFc0HtzEGEoIJhk7DdwCFMqSjqN1tWHRMP4-ShRsIN0hTB6oUw/exec"; // 예: "https://script.google.com/macros/s/AKfycbx.../exec"
+
+/* ================================================================
+   📚 문제 데이터 (15문항)
+   ================================================================ */
+const QUESTIONS = [
+  // 대의제
+  {topic:"대의제", q:"국민이 직접 정치에 참여하는 대신 대표자를 뽑아 국가 의사 결정을 맡기는 제도를 무엇이라 하나요?",
+   choices:["직접민주제","대의제","연방제","의원내각제"], a:1,
+   ex:"대의제(간접민주제)는 국민이 선출한 대표가 국민을 대신해 의사를 결정하는 제도입니다. 국회가 대의제의 핵심 기관이에요."},
+
+  // 입법권 / 입법부
+  {topic:"입법권 / 입법부", q:"법률을 만들고 고치는 권한인 '입법권'을 가진 국가 기관은?",
+   choices:["행정부(정부)","사법부(법원)","입법부(국회)","헌법재판소"], a:2,
+   ex:"입법권은 법률을 제·개정하는 권한이며, 우리나라에서는 국회(입법부)가 이 권한을 행사합니다."},
+
+  {topic:"입법부", q:"입법부에 대한 설명으로 옳은 것은?",
+   choices:["법을 집행하는 기관","법을 만드는 기관","법을 적용해 재판하는 기관","법을 해석하는 헌법기관"], a:1,
+   ex:"입법부=법을 만드는 기관(국회), 행정부=법을 집행, 사법부=법을 적용해 재판. 삼권분립의 한 축이에요."},
+
+  // 지역구 vs 비례대표
+  {topic:"지역구 국회의원", q:"각 지역(선거구)에서 가장 많은 표를 얻어 선출되는 국회의원을 무엇이라 하나요?",
+   choices:["비례대표 국회의원","지역구 국회의원","무소속 국회의원","상임위원"], a:1,
+   ex:"지역구 국회의원은 특정 지역구의 유권자가 직접 뽑는 의원입니다. 해당 지역의 이익과 의견을 대변하는 역할을 해요."},
+
+  {topic:"비례대표 국회의원", q:"비례대표 국회의원이 선출되는 기준으로 옳은 것은?",
+   choices:["출신 지역의 인구","정당의 전국 득표 비율","후보자의 나이","의원 본인의 학력"], a:1,
+   ex:"비례대표는 정당이 받은 득표율에 비례하여 의석을 배분받는 방식입니다. 다양한 직능·소수 의견을 대변하기 위함이에요."},
+
+  // 본회의
+  {topic:"본회의", q:"국회의원 전원이 모여 법률안 등 안건을 최종적으로 의결하는 회의는?",
+   choices:["상임위원회","교섭단체 회의","본회의","공청회"], a:2,
+   ex:"본회의는 국회의 최종 의결 기구로, 일반적으로 재적의원 과반수 출석과 출석의원 과반수 찬성으로 안건을 의결합니다."},
+
+  // 상임위원회
+  {topic:"상임위원회", q:"법률안을 본회의에 올리기 전, 분야별로 전문적으로 미리 심사하는 기구는?",
+   choices:["교섭단체","상임위원회","국정감사단","청문회"], a:1,
+   ex:"상임위원회는 교육·외교·국방 등 분야별로 나뉘어 안건을 전문 심사합니다. 효율적 의사 진행을 위한 핵심 장치예요."},
+
+  // 교섭단체
+  {topic:"교섭단체", q:"국회에서 의사 진행을 협의하기 위해 보통 20명 이상의 의원으로 구성하는 단체는?",
+   choices:["상임위원회","교섭단체","정책위원회","원내정당"], a:1,
+   ex:"교섭단체는 원칙적으로 20인 이상 소속 의원이 있는 정당이 구성하며, 국회 운영·의사일정 등을 협의합니다."},
+
+  // 입법권한
+  {topic:"국회 권한 — 입법", q:"다음 중 국회의 '입법에 관한 권한'에 해당하지 <b>않는</b> 것은?",
+   choices:["법률 제정·개정","헌법 개정안 의결","조약 체결·비준 동의","예산안 편성"], a:3,
+   ex:"예산안 '편성'은 정부의 권한이고, 국회는 이를 '심의·확정'합니다. 헌법개정·조약동의·법률제정은 모두 국회의 입법 관련 권한이에요."},
+
+  {topic:"국회 권한 — 입법", q:"국회는 외국과 맺는 중요 조약에 대해 어떤 역할을 하나요?",
+   choices:["조약을 직접 체결한다","체결·비준에 동의한다","조약을 해석한다","조약을 폐기만 결정한다"], a:1,
+   ex:"조약 체결은 대통령이 하지만, 중요한 조약은 국회의 동의를 받아야 효력이 생깁니다. 이는 입법에 관한 권한 중 하나예요."},
+
+  // 재정 권한
+  {topic:"국회 권한 — 재정", q:"국회가 정부 예산을 심의해 확정하고 결산을 심사하는 권한은 어디에 속할까요?",
+   choices:["입법에 관한 권한","국가 재정에 관한 권한","일반 국정에 관한 권한","사법에 관한 권한"], a:1,
+   ex:"예산안 심의·확정, 결산 심사, 조세 법률주의 등은 모두 '국가 재정에 관한 권한'에 해당합니다."},
+
+  {topic:"국회 권한 — 재정", q:"\"세금의 종목과 세율은 법률로 정한다\"는 원칙은 무엇이라 부르나요?",
+   choices:["국정감사권","조세 법률주의","예산 편성권","재정 자치주의"], a:1,
+   ex:"조세 법률주의는 국민의 재산권을 보호하기 위해 세금은 반드시 국회가 만든 법률로 정해야 한다는 원칙입니다."},
+
+  // 일반 국정에 관한 권한
+  {topic:"국회 권한 — 국정감사", q:"매년 정기적으로 국정 전반에 대해 행정부의 잘잘못을 따지는 국회의 활동은?",
+   choices:["국정조사","국정감사","청문회","탄핵소추"], a:1,
+   ex:"국정감사는 매년 정기국회 기간에 국정 전반을 정기적으로 점검합니다. 국정조사는 특정 사안이 발생했을 때 비정기적으로 진행돼요."},
+
+  {topic:"국회 권한 — 국정조사", q:"특정한 국정 사안에 문제가 생겼을 때 국회가 비정기적으로 진상을 조사하는 권한은?",
+   choices:["국정감사권","국정조사권","탄핵소추권","입법권"], a:1,
+   ex:"국정조사권은 '특정 사안'에 대해 국회가 별도로 진상을 조사하는 권한입니다. 정기적인 국정감사와 구분해서 기억해 두세요!"},
+
+  {topic:"국회 권한 — 탄핵소추", q:"대통령·국무총리·법관 등 고위 공직자가 헌법·법률을 위반했을 때 국회가 그 파면을 요구하는 권한은?",
+   choices:["국정감사권","국정조사권","탄핵소추권","법률거부권"], a:2,
+   ex:"탄핵소추권은 일반 국정에 관한 권한 중 하나입니다. 국회가 소추를 의결하면 헌법재판소가 최종적으로 탄핵 여부를 결정해요."}
 ];
 
-// ── state ──
-let questions=[], qIdx=0, score=0, streak=0, userAnswers=[], answered=false;
-let playerName='', currentTab='all';
-const STORAGE_KEY = 'quiz_leaderboard_v1';
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbyz_VJmXCcEFZvSJ1H6JdsC3f-KN_K6IGkuegGh1q4gRUGZ37vlVlXvXLdAIHj1q1v0uQ/exec';
+/* ================================================================
+   🎮 게임 로직
+   ================================================================ */
+let state = {
+  screen: 'intro',
+  name: '', cls: '', num: '',
+  cur: 0, score: 0,
+  startTime: null,
+  answers: [], // [{topic,q,picked,correct,isOk,timeSec}]
+  qStartTime: null,
+  locked: false
+};
+const app = document.getElementById('app');
 
-// ── storage helpers (localStorage) ──
-function loadBoard() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch(e) { return []; }
-}
-function saveBoard(b) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(b));
-}
-
-// ── utilities ──
-function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.style.opacity = '1';
-  setTimeout(() => t.style.opacity = '0', 2400);
-}
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+function shuffleQuestions(){
+  // 학생마다 같은 순서로 보고싶다면 이 함수를 호출하지 마세요.
+  // QUESTIONS.sort(()=>Math.random()-0.5);
 }
 
-// ── init ──
-
-// ── start ──
-function tryStart() {
-  const n = document.getElementById('name-input').value.trim();
-  if (!n) { showToast('이름을 입력해 주세요!'); return; }
-  playerName = n;
-  startGame();
-}
-function startGame() {
-  questions = shuffle(ALL_QUESTIONS).slice(0, 15);
-  qIdx = 0; score = 0; streak = 0; userAnswers = [];
-  showScreen('quiz-screen');
-  renderQ();
-}
-function restartGame() {
-  showScreen('start-screen');
-  document.getElementById('name-input').value = playerName;
-}
-function goStart() { showScreen('start-screen'); }
-
-// ── quiz ──
-function renderQ() {
-  answered = false;
-  const q = questions[qIdx];
-  document.getElementById('q-counter').textContent = `문제 ${qIdx+1} / ${questions.length}`;
-  document.getElementById('streak-display').textContent = streak >= 3 ? `🔥 ${streak}연속 정답!` : '';
-  document.getElementById('prog').style.width = `${(qIdx / questions.length) * 100}%`;
-  const catEl = document.getElementById('q-category');
-  catEl.textContent = q.cat; catEl.className = `badge ${q.cat_class}`;
-  document.getElementById('q-text').textContent = q.q;
-  const opts = document.getElementById('options');
-  opts.innerHTML = '';
-  q.opts.forEach((o, i) => {
-    const b = document.createElement('button');
-    b.className = 'opt-btn';
-    b.textContent = `${['①','②','③','④'][i]} ${o}`;
-    b.onclick = () => selectAns(i, b);
-    opts.appendChild(b);
-  });
-  document.getElementById('feedback').style.display = 'none';
-  document.getElementById('next-btn').style.display = 'none';
-}
-function selectAns(idx, btn) {
-  if (answered) return;
-  answered = true;
-  const q = questions[qIdx];
-  const btns = document.querySelectorAll('.opt-btn');
-  btns.forEach(b => b.disabled = true);
-  const correct = idx === q.ans;
-  if (correct) { score++; streak++; btn.classList.add('correct'); }
-  else { streak = 0; btn.classList.add('wrong'); btns[q.ans].classList.add('reveal-correct'); }
-  userAnswers.push({ q: q.q, correct, chosen: q.opts[idx], answer: q.opts[q.ans], exp: q.exp });
-  const fb = document.getElementById('feedback');
-  fb.style.display = 'block';
-  fb.innerHTML = `<strong style="color:${correct?'#3B6D11':'#A32D2D'}">${correct?'✓ 정답!':'✗ 오답!'}</strong><br>${q.exp}`;
-  document.getElementById('streak-display').textContent = streak >= 3 ? `🔥 ${streak}연속 정답!` : '';
-  document.getElementById('next-btn').style.display = 'inline-block';
-}
-function nextQ() {
-  qIdx++;
-  if (qIdx >= questions.length) { showResult(); return; }
-  renderQ();
+function renderIntro(){
+  app.innerHTML = `
+    <h1>🏛️ 국회 탐험대</h1>
+    <div class="sub">국회의 위상과 역할 — 개념 정리 퀴즈 (총 ${QUESTIONS.length}문항)</div>
+    <div class="field">
+      <label>이름</label>
+      <input id="name" placeholder="홍길동" maxlength="20"/>
+    </div>
+    <div class="field">
+      <label>반</label>
+      <input id="cls" placeholder="3학년 2반" maxlength="20"/>
+    </div>
+    <div class="field">
+      <label>번호</label>
+      <input id="num" placeholder="15" maxlength="5" inputmode="numeric"/>
+    </div>
+    <button class="btn" id="startBtn">🚀 퀴즈 시작하기</button>
+    <hr>
+    <div style="font-size:12px;color:#6b7280;line-height:1.7">
+      📝 <b>학습 목표</b><br>
+      대의제, 입법권/입법부, 지역구·비례대표 의원, 본회의·상임위원회·교섭단체,<br>
+      국회의 입법·재정·일반 국정 권한(국정감사·조사·탄핵소추) 개념 이해
+    </div>
+  `;
+  document.getElementById('startBtn').onclick = ()=>{
+    const n = document.getElementById('name').value.trim();
+    const c = document.getElementById('cls').value.trim();
+    const nu = document.getElementById('num').value.trim();
+    if(!n || !c || !nu){ alert('이름·반·번호를 모두 입력해 주세요!'); return; }
+    state.name=n; state.cls=c; state.num=nu;
+    state.startTime = Date.now();
+    state.screen='quiz';
+    renderQuiz();
+  };
 }
 
-// ── result ──
-function showResult() {
-  showScreen('result-screen');
-  document.getElementById('final-score').textContent = score;
-  document.getElementById('final-total').textContent = `/ ${questions.length}점`;
-  const pct = Math.round((score / questions.length) * 100);
-  let msg = '';
-  if (pct >= 90) msg = '완벽해요! 국회 전문가 수준이에요 🏆';
-  else if (pct >= 70) msg = '잘 했어요! 조금만 더 복습해 봐요 👍';
-  else if (pct >= 50) msg = '절반 통과! 틀린 문제를 다시 확인해 봐요 📖';
-  else msg = '다시 한번 공부하고 도전해 봐요 💪';
-  document.getElementById('result-msg').textContent = `${playerName} 학생 — ${msg}`;
-  document.getElementById('submit-area').style.display = 'block';
-  document.getElementById('submit-lb-btn').disabled = false;
-  document.getElementById('submit-lb-btn').textContent = '📤 점수 제출';
-  document.getElementById('review-list').style.display = 'none';
-  document.getElementById('submit-status').style.display = 'none';
-}
-
-async function submitBoth() {
-  const btn = document.getElementById('submit-lb-btn');
-  const status = document.getElementById('submit-status');
-  btn.disabled = true; btn.textContent = '제출 중...';
-  status.style.display = 'block'; status.style.color = '#534AB7';
-  status.textContent = '구글 시트에 전송 중이에요...';
-
-  const pct = Math.round((score / questions.length) * 100);
-  const now = new Date();
-  const time = now.toLocaleString('ko-KR');
-  const timeShort = `${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-  const payload = { name: playerName, score, total: questions.length, pct, time };
-
-  // 1) 리더보드 로컬 저장
-  let board = loadBoard();
-  board.push({ name: playerName, score, total: questions.length, pct, time: timeShort });
-  board.sort((a, b) => b.pct - a.pct || b.score - a.score);
-  if (board.length > 100) board = board.slice(0, 100);
-  saveBoard(board);
-
-  // 2) 구글 시트 전송
-  try {
-    await fetch(SHEET_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    status.textContent = '✓ 리더보드 등록 + 구글 시트 전송 완료!';
-    status.style.color = '#3B6D11';
-    showToast('✓ 점수가 성공적으로 제출됐어요!');
-    btn.textContent = '✓ 제출 완료';
-  } catch(e) {
-    status.textContent = '리더보드 등록 완료 (시트 전송 실패)';
-    status.style.color = '#A32D2D';
-    btn.textContent = '✓ 로컬 등록 완료';
-    showToast('구글 시트 전송에 실패했어요.');
-  }
-}
-
-function skipSubmit() {
-  document.getElementById('submit-area').style.display = 'none';
-}
-
-function toggleReview() {
-  const div = document.getElementById('review-list');
-  const items = document.getElementById('review-items');
-  if (div.style.display === 'block') { div.style.display = 'none'; return; }
-  div.style.display = 'block';
-  items.innerHTML = '';
-  userAnswers.forEach((a, i) => {
-    const el = document.createElement('div');
-    el.className = 'result-item';
-    el.innerHTML = `<div class="icon ${a.correct?'icon-ok':'icon-x'}">${a.correct?'✓':'✗'}</div>
+function renderQuiz(){
+  const Q = QUESTIONS[state.cur];
+  state.qStartTime = Date.now();
+  state.locked = false;
+  app.innerHTML = `
+    <div class="header">
       <div>
-        <div style="font-weight:600;color:#222;margin-bottom:3px">${i+1}. ${a.q}</div>
-        ${!a.correct?`<div style="color:#A32D2D;margin-bottom:2px">내 답: ${a.chosen}</div><div style="color:#3B6D11;margin-bottom:4px">정답: ${a.answer}</div>`:''}
-        <div style="color:#666">${a.exp}</div>
-      </div>`;
-    items.appendChild(el);
+        <div class="title">🏛️ 국회 탐험대</div>
+        <div class="user-info">${state.cls} · ${state.num}번 ${state.name}</div>
+      </div>
+      <span class="badge">${state.cur+1} / ${QUESTIONS.length}</span>
+    </div>
+    <div class="progress"><div style="width:${(state.cur/QUESTIONS.length)*100}%"></div></div>
+    <span class="qtag">${Q.topic}</span>
+    <p class="question">${Q.q}</p>
+    <div id="choices"></div>
+    <div class="feedback" id="fb"></div>
+    <div class="actions">
+      <span class="score">점수: ${state.score}점</span>
+      <button class="btn btn-sm" id="nextBtn" disabled>${state.cur===QUESTIONS.length-1?'결과 보기 🏆':'다음 문제 →'}</button>
+    </div>
+  `;
+  const choicesEl = document.getElementById('choices');
+  Q.choices.forEach((c,i)=>{
+    const b = document.createElement('button');
+    b.className = 'choice';
+    b.innerHTML = `${['①','②','③','④'][i]} ${c}`;
+    b.onclick = ()=>pick(i,b,Q);
+    choicesEl.appendChild(b);
   });
+  document.getElementById('nextBtn').onclick = ()=>{
+    state.cur++;
+    if(state.cur>=QUESTIONS.length){ state.screen='result'; renderResult(); }
+    else renderQuiz();
+  };
 }
 
-// ── leaderboard ──
-function switchTab(tab) {
-  currentTab = tab;
-  document.getElementById('tab-all').className = 'tab' + (tab==='all'?' active':'');
-  document.getElementById('tab-top').className = 'tab' + (tab==='top'?' active':'');
-  renderLeaderboard();
+function pick(i,btn,Q){
+  if(state.locked) return;
+  state.locked = true;
+  const timeSec = Math.round((Date.now()-state.qStartTime)/1000);
+  const all = document.querySelectorAll('.choice');
+  all.forEach(b=>b.disabled=true);
+  const fb = document.getElementById('fb');
+  const isOk = (i===Q.a);
+  if(isOk){
+    btn.classList.add('correct');
+    state.score += 10;
+    fb.className = 'feedback show ok';
+    fb.innerHTML = `✅ <b>정답!</b> ${Q.ex}`;
+  }else{
+    btn.classList.add('wrong');
+    all[Q.a].classList.add('correct');
+    fb.className = 'feedback show no';
+    fb.innerHTML = `❌ <b>아쉬워요.</b> 정답: <b>${Q.choices[Q.a]}</b><br>${Q.ex}`;
+  }
+  state.answers.push({
+    topic: Q.topic,
+    question: Q.q.replace(/<[^>]+>/g,''),
+    picked: Q.choices[i],
+    correct: Q.choices[Q.a],
+    isOk: isOk,
+    timeSec: timeSec
+  });
+  document.querySelector('.score').textContent = `점수: ${state.score}점`;
+  document.getElementById('nextBtn').disabled = false;
 }
-function goLeaderboard() { showScreen('leaderboard-screen'); renderLeaderboard(); }
-function renderLeaderboard() {
-  const el = document.getElementById('lb-content');
-  const board = loadBoard();
-  if (board.length === 0) {
-    el.innerHTML = '<div class="empty-lb">아직 등록된 점수가 없어요.<br>게임을 완료하고 첫 번째로 등록해 봐요!</div>';
+
+function renderResult(){
+  const max = QUESTIONS.length*10;
+  const pct = Math.round(state.score/max*100);
+  const totalSec = Math.round((Date.now()-state.startTime)/1000);
+  let msg='👍 잘했어요!', emoji='🎉';
+  if(pct===100){msg='완벽해요! 국회 박사!'; emoji='🏆';}
+  else if(pct>=80){msg='훌륭해요!'; emoji='🌟';}
+  else if(pct>=60){msg='조금만 더 복습해요!'; emoji='📘';}
+  else{msg='교과서 다시 한 번 보고 도전!'; emoji='💪';}
+
+  // 오답 분석
+  const wrongs = state.answers.filter(a=>!a.isOk);
+  const wrongList = wrongs.length
+    ? `<div style="text-align:left;margin-top:14px;padding:12px;background:#fef9c3;border-radius:8px;font-size:12.5px;line-height:1.6">
+         <b>📌 다시 볼 개념:</b><br>${wrongs.map(w=>`• ${w.topic}`).join('<br>')}
+       </div>`
+    : `<div style="margin-top:14px;padding:12px;background:#d1fae5;border-radius:8px;font-size:13px;color:#065f46"><b>🎯 모든 문제를 맞혔어요!</b></div>`;
+
+  app.innerHTML = `
+    <div class="result">
+      <div class="emoji">${emoji}</div>
+      <h2>${msg}</h2>
+      <div class="big">${state.score} / ${max}</div>
+      <p>정답률 <b>${pct}%</b> · 소요시간 ${totalSec}초</p>
+      <p style="font-size:12px;color:#9ca3af">${state.cls} · ${state.num}번 ${state.name}</p>
+      ${wrongList}
+      <div id="sendStatus" class="send-status pending">📤 결과를 선생님께 전송 중...</div>
+      <button class="btn" id="retryBtn" style="margin-top:14px">다시 도전하기 🔄</button>
+    </div>
+  `;
+  document.getElementById('retryBtn').onclick = ()=>{
+    state = {screen:'intro',name:'',cls:'',num:'',cur:0,score:0,startTime:null,answers:[],qStartTime:null,locked:false};
+    renderIntro();
+  };
+
+  // Google Sheets 전송
+  sendToSheet(pct,totalSec);
+}
+
+function sendToSheet(pct,totalSec){
+  const status = document.getElementById('sendStatus');
+  if(!GOOGLE_SCRIPT_URL){
+    status.className = 'send-status err';
+    status.innerHTML = '⚠️ Google Sheets URL이 설정되지 않았습니다. 선생님께 알려주세요.';
     return;
   }
-  const display = currentTab === 'top' ? board.slice(0, 5) : board;
-  const medals = ['🥇','🥈','🥉'];
-  el.innerHTML = display.map((e, i) => {
-    const rank = medals[i] || (i+1);
-    const isMe = e.name === playerName;
-    return `<div class="lb-row ${isMe?'lb-mine':'lb-other'}">
-      <span class="lb-rank">${rank}</span>
-      <span class="lb-name">${e.name}${isMe?' ★':''}</span>
-      <span style="font-size:12px;color:#999;min-width:40px;text-align:right">${e.pct}%</span>
-      <span class="lb-score">${e.score}/${e.total}</span>
-      <span class="lb-time">${e.time}</span>
-    </div>`;
-  }).join('');
+
+  const payload = {
+    timestamp: new Date().toISOString(),
+    name: state.name,
+    cls: state.cls,
+    num: state.num,
+    score: state.score,
+    maxScore: QUESTIONS.length*10,
+    percent: pct,
+    totalSec: totalSec,
+    correctCount: state.answers.filter(a=>a.isOk).length,
+    wrongTopics: state.answers.filter(a=>!a.isOk).map(a=>a.topic).join(' | '),
+    answers: JSON.stringify(state.answers)
+  };
+
+  // CORS 우회를 위해 text/plain 방식 사용 (Apps Script doPost 호환)
+  fetch(GOOGLE_SCRIPT_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(payload)
+  }).then(()=>{
+    status.className = 'send-status ok';
+    status.innerHTML = '✅ 결과가 선생님께 전송되었습니다!';
+  }).catch(err=>{
+    status.className = 'send-status err';
+    status.innerHTML = '⚠️ 전송 실패. 화면을 캡처해서 선생님께 보여주세요.';
+    console.error(err);
+  });
 }
-function clearBoard() {
-  if (!confirm('리더보드를 초기화할까요?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  showToast('리더보드가 초기화됐어요.');
-  renderLeaderboard();
-}
+
+renderIntro();
 </script>
 </body>
 </html>
